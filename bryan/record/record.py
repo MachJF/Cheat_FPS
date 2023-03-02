@@ -1,5 +1,5 @@
 import numpy as np
-from PIL import ImageGrab
+from PIL import ImageGrab, ImageQt
 import cv2
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QVBoxLayout, QFileDialog, QComboBox, QLabel
 from PyQt5.QtCore import *
@@ -7,8 +7,24 @@ from PyQt5.QtCore import *
 # from PyQt6.QtCore import *
 import win32gui
 import sys
+from ultralyticsplus import YOLO, render_result
 import os
 import time
+
+
+def init_detector():
+    model = YOLO('keremberke/yolov8m-csgo-player-detection')
+    model.overrides['conf'] = 0.25
+    model.overrides['iou'] = 0.45
+    model.overrides['agnostic_nms'] = False
+    model.overrides['max_det'] = 1000
+    return model
+
+
+def detect(model, img):
+    results = model.predict(img)
+    render = render_result(model=model, result=results[0], image=img)
+    return render
 
 
 def pil_recorder():
@@ -106,10 +122,18 @@ def qt_recorder():
             hwnd = win32gui.FindWindow(None, window_name)
             screen = app.primaryScreen()
             img = screen.grabWindow(hwnd).toImage()
+            model = init_detector()
+            pil_img = ImageQt.fromqimage(img)
+            # pil_img.show()
+            result = model.predict(pil_img)
+            print(result[0].boxes)
             while True:
                 img = screen.grabWindow(hwnd).toImage()
-                img = qt2mat(img)
-                frame = img
+                pil_img = ImageQt.fromqimage(img)
+                result = detect(model, pil_img)
+                img_np = np.array(result)
+                frame = cv2.cvtColor(img_np, cv2.COLOR_BGR2RGB)                # img = qt2mat(img)
+                # frame = img
                 # self.video.write(frame)
                 cv2.imshow('frame', frame)
                 if cv2.waitKey(1) == ord('q'):

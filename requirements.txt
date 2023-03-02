@@ -40,6 +40,6 @@ thop~=0.1.1-2209072238
 
 pyautogui~=0.9.53
 win32gui
-PyQt5
+PyQt5~=5.15.9
 
 pyqt6~=6.4.2
