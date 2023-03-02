@@ -41,13 +41,25 @@ def qt2mat(qt_image):
 
 # 使用 PyQt5 录制屏幕
 def qt_recorder():
+    def get_all_hwnd():
+        hwnd_title = dict()
+
+        def callback(hwnd, mouse):
+            if win32gui.IsWindow(hwnd) and win32gui.IsWindowEnabled(hwnd) and win32gui.IsWindowVisible(hwnd):
+                hwnd_title.update({hwnd: win32gui.GetWindowText(hwnd)})
+
+        win32gui.EnumWindows(callback, 0)
+        titles = [t for _, t in hwnd_title.items()]
+        return titles
+
     def get_all_windows():
         def callback(hwnd, extra):
             if win32gui.IsWindowVisible(hwnd):
-                titles.append(win32gui.GetWindowText(hwnd))
+                if win32gui.GetWindowText(hwnd) != '':
+                    titles.append(win32gui.GetWindowText(hwnd))
 
         titles = []
-        win32gui.EnumWindows(callback, None)
+        win32gui.EnumWindows(callback, 0)
         return titles
 
     class Window(QWidget):
@@ -56,7 +68,7 @@ def qt_recorder():
             self.lbl = None
             self.window_name = None
             self.setWindowTitle('录制屏幕')
-            self.resize(500, 500)
+            self.resize(600, 600)
             self.btn = QPushButton('开始录制')
             self.init_combo()
             # self.combo.textActivated[str].connect(self.on_activated)
